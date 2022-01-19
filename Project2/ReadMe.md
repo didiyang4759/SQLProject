@@ -10,7 +10,7 @@ In Part 1 you create a normalized relational OLTP database and populate it with 
 ### Part 1 . Load XML
 1.  Create a normalized relational schema that contains the following entities/tables:  _Articles_,  _Journals_,  _Authors_. Use the XML document to determine the appropriate attributes (fields/columns) for the entities (tables). While there may be other types of publications in the XML, you only need to deal with articles in journals. Create appropriate primary and foreign keys. Where necessary, add surrogate keys. Include an image of an ERD showing your model in your R Notebook. For articles you should minimally store the article title (<ArticleTitle>) and date created (<DateCreated>); for journals store the journal name/title, volume, issue, and publication date. For authors you should store last name, first name, initial, and affiliation.
 
-![image(https://github.com/didiyang4759/SQLProject/blob/main/Project2/DBMS%20ER%20diagram.png)
+![image](https://github.com/didiyang4759/SQLProject/blob/main/Project2/DBMS%20ER%20diagram.png)
 
 2.  Realize the relational schema in SQLite (place the CREATE TABLE statements into SQL chunks in your R Notebook). Use the appropriate tag for publication date.
 ```{sql connection=dbcon}
