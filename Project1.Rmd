@@ -1,0 +1,243 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r echo=FALSE}
+library(RMySQL)
+db_user <- 'cs5200'
+db_password <- '12345678'
+db_name <- 'SandboxDB' 
+db_host <- 'cs5211-dbs.cbw6wxrvp4bq.us-east-2.rds.amazonaws.com'
+db_port <- 3306
+mydb <-  dbConnect(MySQL(), user = db_user, password = db_password, 
+                   dbname = db_name, host = db_host, port = db_port)
+
+```
+
+```{sql connection=mydb}
+drop table if exists incidents;
+```
+
+
+```{sql connection=mydb}
+drop table if exists airports;
+```
+
+```{sql connection=mydb}
+drop table if exists airlines;
+```
+
+1. Create Table
+```{sql connection=mydb}
+create table airlines(
+  aid int not null primary key,
+  code varchar(30),
+  airline varchar(40)
+);
+```
+
+
+
+```{sql connection=mydb}
+create table airports (
+  pid varchar(80) not null primary key, 
+  code  varchar(30), 
+  name varchar(80),
+  city  varchar(40),
+  state  varchar(40),
+  country  varchar(40)
+);
+
+```
+
+```{sql connection=mydb}
+create table incidents(
+  iid int  not null  primary key,
+  date date,
+  depPort varchar(60),
+  arrPort varchar(60),
+  airline int, 
+  aircraft  varchar(60),
+  flightPhase  varchar(30)  check(flightPhase in('takeoff', 'landing', 'inflight', 'unknown')), 
+  impact  varchar(30) check(impact in('Caused damage','No damage')), 
+  foreign key(depPort) references airports(pid),
+  foreign key(arrPort) references airports(pid),
+  foreign key(airline) references airlines(aid)
+);
+
+```
+
+
+Q2.Read Table and Insert Value
+```{r warning=F, message=F}
+library(readr)
+library(sqldf)
+library(lubridate)
+BirdStrikesData <- read_csv("BirdStrikesData.csv")
+BirdStrikesData$date <- date(mdy_hm(BirdStrikesData$FlightDate))
+```
+
+Q2.Read Table and Insert Value
+```{r warning=F, message=F}
+airlines <- data.frame(
+  aid=1:length(unique(BirdStrikesData$`Aircraft: Airline/Operator`)),
+  code=NA,
+  airline=unique(BirdStrikesData$`Aircraft: Airline/Operator`))
+
+```
+Q2.Read Table and Insert Value
+```{r}
+airlines$code <- as.character(airlines$code)
+dbExecute(mydb, sqlAppendTable(mydb, "airlines", airlines, row.names = NULL))
+```
+Q2.Read Table and Insert Value
+```{r warning=F, message=F}
+library(tidyverse)
+BirdStrikesData <- left_join(BirdStrikesData, airlines, by=c("Aircraft: Airline/Operator"="airline"))
+airports <- BirdStrikesData %>% select(`Airport: Name`, `Origin State`) %>%
+  mutate(code=NA, city=NA, country=NA)
+colnames(airports) <- c("name", "state", "code", "city", "country")
+airports <- airports[!duplicated(airports$name), ]
+airports$pid <- 1:nrow(airports)
+airports <- airports[, c("pid", "code", "name", "city", "state",  "country")]
+dbExecute(mydb, sqlAppendTable(mydb, "airports", airports, row.names = NULL))
+```
+
+Q2.Read Table and Insert Value
+```{r}
+BirdStrikesData <- left_join(BirdStrikesData, airports, by=c("Airport: Name"="name"))
+```
+Q2.Read Table and Insert Value and fix flight phase
+```{r}
+BirdStrikesData$flightPhase <- rep("unknown", nrow(BirdStrikesData))
+BirdStrikesData$flightPhase[BirdStrikesData$`When: Phase of flight`=="Approach"] <- "inflight"
+BirdStrikesData$flightPhase[BirdStrikesData$`When: Phase of flight`=="Climb"] <- "takeoff"
+BirdStrikesData$flightPhase[BirdStrikesData$`When: Phase of flight`=="Descent"] <- "inflight"
+BirdStrikesData$flightPhase[BirdStrikesData$`When: Phase of flight`=="Landing Roll"] <- "landing"
+BirdStrikesData$flightPhase[BirdStrikesData$`When: Phase of flight`=="Parked"] <- "landing"
+BirdStrikesData$flightPhase[BirdStrikesData$`When: Phase of flight`=="Take-off run"] <- "takeoff"
+```
+
+Q2.Read Table and Insert Value Assign synthetic key values to aid, iid, and pid and use them as primary keys.
+```{r}
+BirdStrikesData$iid <- 1:nrow(BirdStrikesData)
+BirdStrikesData$aircraft <- BirdStrikesData$`Aircraft: Make/Model`
+BirdStrikesData$impact <- BirdStrikesData$`Effect: Indicated Damage`
+BirdStrikesData$depPort <- BirdStrikesData$pid
+BirdStrikesData$arrPort <- BirdStrikesData$pid
+BirdStrikesData$airline <- BirdStrikesData$aid
+incidents <- BirdStrikesData %>% select(iid, date, depPort, arrPort, airline, aircraft,
+                                        flightPhase, impact
+                                        )
+incidents$date <- as.character(incidents$date)
+dbExecute(mydb, sqlAppendTable(mydb, "incidents", incidents, row.names = NULL))
+```
+
+Q3. Show that the loading of the data
+```{sql connection=mydb}
+select date,aircraft,flightPhase,impact from incidents
+
+```
+
+Q3.Show that the loading of the data
+```{sql connection=mydb}
+select pid, name,state from airports
+```
+
+Q3.Show that the loading of the data
+
+```{sql connection=mydb}
+select aid, airline  from airlines
+```
+
+Q4.
+```{sql connection=mydb}
+select airlines.airline,count(*)
+from airlines inner join incidents on airlines.aid=incidents.airline
+inner join airports on incidents.arrPort=airports.pid
+where airports.name='LaGuardia NY' and flightPhase='landing'
+group by airlines.airline;
+```
+
+Q5.
+```{sql connection=mydb}
+select  tt.name
+from
+(
+ select t.name, count(*) as nums
+ from 
+ (
+  select airports.name,incidents.iid
+  from airlines inner join incidents on airlines.aid=incidents.airline
+  inner join airports on incidents.depPort=airports.pid
+  where airlines.airline not in('Business','PRIVATELY OWNED','MILITARY')  
+  union all
+  select airports.name,incidents.iid
+  from airlines inner join incidents on airlines.aid=incidents.airline
+  inner join airports on incidents.arrPort=airports.pid
+  where airlines.airline not in('Business','PRIVATELY OWNED','MILITARY')  
+ )  t
+ group by t.name
+    order by  count(*)  desc
+    limit 1
+) tt;
+```
+
+Q6.
+```{r}
+library(sqldf)
+library(RSQLite)
+fpath = "/Users/diyang/Desktop/CS5200/00/"
+dbfile = "BirdStrikesData.csv"
+```
+
+```{r}
+dbDisconnect(dbcon)
+```
+Q6. find the number of bird strike incidents by year
+```{r}
+sqlCmd = "select year(date) as year,count(*) as num
+from incidents
+group by year(date);"
+rs = dbGetQuery(mydb,sqlCmd)
+rs
+```
+
+Q7. Firsrt find the bird strikes incidents per year from 2005 to 2011
+```{r}
+sqlCmd = "select year(date) as year,count(*) as sumNumberOfBirdStrike
+from incidents where year(date) between '2005' and '2011'
+group by year(date);"
+df = dbGetQuery(mydb,sqlCmd)
+df
+```
+
+Q7. creat line plot for bird strikes incidents per year from 2005 to 2011
+```{r}
+library(ggplot2)
+library(lubridate)
+p<-ggplot(df,aes(x=year,y=sumNumberOfBirdStrike)) + geom_line()+geom_point() + ggtitle("SumNumberOfBirdStrike")
+p
+```
+
+
+Q8. removes a bird strike incident from the database
+
+```{sql connection=mydb}
+
+create procedure proc_1(in airline_name varchar(100))
+begin
+  delete from incidents
+     where airline in (select aid
+      from airlines
+                        where airline=airline_name);
+end ;
+call proc_1('AMERICAN AIRLINES'); 
+
+```
+
+
+
