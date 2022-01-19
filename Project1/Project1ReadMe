@@ -1,8 +1,8 @@
-1. In this project builded a database that can be used to analyze bird strikes on aircraft. For an existing data set from the FAA [1], 
+### 1. In this project builded a database that can be used to analyze bird strikes on aircraft. For an existing data set from the FAA [1], 
 and will build a logical data model, a relational schema, realize the relational schema in MySQL/MariaDB, load data into the database,
 execute SQL queries, a finally perform some simple analysis of the data.
 
-2. In this Project will learn to:
+### 2. In this Project will learn to:
 install/procure MySQL or MariaDB
 connect to MySQL/MariaDB from R in an R Notebook
 build a relational schema in 2NF (but ideally in BCNF) for an existing data set
@@ -13,7 +13,7 @@ identify and resolve programming errors
 look up details for R, SQL, and MySQL/MariaDB
 time-box work
 
-3.This project seperate 8 parts:
+### 3.This project seperate 8 parts:
 
 ①Inspecting the data file; assume that this database will be used for an app that can be used by pilots (of any kind of aircraft) to report wildlife incidents. 
 Create a new database and connect to it from R. Then create the following tables: incidents(iid, date, depPort, arrPort, airline, aircraft, flightPhase, impact). 
