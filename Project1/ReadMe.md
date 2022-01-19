@@ -7,14 +7,7 @@
 In this project builded a database that can be used to analyze bird strikes on aircraft. For an existing data set from the FAA and will build a logical data model, a relational schema, realize the relational schema in MySQL/MariaDB, load data into the database, execute SQL queries, a finally perform some simple analysis of the data.
 
 The graphic below shows some statistics regarding bird strikes and helps frame the data in the data file.
-![image](
-
-
-
-
-
-
-
+![image](https://github.com/didiyang4759/SQLProject/blob/main/Project1/visualization%20of%20data.png)
 
 
 ### 2. Learning Objectives
