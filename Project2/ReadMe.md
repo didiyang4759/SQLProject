@@ -5,7 +5,7 @@
 - [Explore and Mine Data](#explore-and-mine-data)
 
 ### Overview
-In Part 1 you create a normalized relational OLTP database and populate it with data from an XML document. In Part 2 you will add to the normalized schema fact tables and turn the normalized schema into a denormalized schema suitable for OLAP. In Part 3 you'll use the OLAP star/snowflake schema to do some (simple) data mining.
+In Part 1 created a normalized relational OLTP database and populate it with data from an XML document. In Part 2 added to the normalized schema fact tables and turn the normalized schema into a denormalized schema suitable for OLAP. In Part 3 used the OLAP star/snowflake schema to do some (simple) data mining.
 
 ### Part 1 . Load XML
 1.  Create a normalized relational schema that contains the following entities/tables:  _Articles_,  _Journals_,  _Authors_. Use the XML document to determine the appropriate attributes (fields/columns) for the entities (tables). While there may be other types of publications in the XML, you only need to deal with articles in journals. Create appropriate primary and foreign keys. Where necessary, add surrogate keys. Include an image of an ERD showing your model in your R Notebook. For articles you should minimally store the article title (<ArticleTitle>) and date created (<DateCreated>); for journals store the journal name/title, volume, issue, and publication date. For authors you should store last name, first name, initial, and affiliation.
